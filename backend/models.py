@@ -2,69 +2,9 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 
 
-class APIReference(models.Model):
-    """Базовая модель для API ссылок"""
-    name = models.CharField(max_length=255, verbose_name="Название")
-    url = models.URLField(max_length=500, verbose_name="URL")
-    
-    class Meta:
-        verbose_name = "API Ссылка"
-        verbose_name_plural = "API Ссылки"
-    
-    def __str__(self):
-        return self.name
-
 # 
-# Заклинания
-#
-
-class AreaOfEffect(models.Model):
-    """Модель для области эффекта заклинания"""
-    type = models.CharField(max_length=100, verbose_name="Тип области")
-    size = models.IntegerField(verbose_name="Размер")
-    
-    class Meta:
-        verbose_name = "Область эффекта"
-        verbose_name_plural = "Области эффекта"
-    
-    def __str__(self):
-        return f"{self.type} ({self.size})"
-
-class AbilityScore(models.Model):
-    """Модель для характеристик способностей"""
-    name = models.CharField(max_length=100, verbose_name="Краткое название")
-    full_name = models.CharField(max_length=100, verbose_name="Полное название")
-    
-    class Meta:
-        verbose_name = "Характеристика способности"
-        verbose_name_plural = "Характеристики способностей"
-    
-    def __str__(self):
-        return self.name
-
-class DamageType(models.Model):
-    """Модель для типов урона"""
-    name = models.CharField(max_length=100, verbose_name="Название типа урона")
-    
-    class Meta:
-        verbose_name = "Тип урона"
-        verbose_name_plural = "Типы урона"
-    
-    def __str__(self):
-        return self.name
-
-class MagicSchool(models.Model):
-    """Модель для школ магии"""
-    name = models.CharField(max_length=100, verbose_name="Название школы")
-    desc = models.TextField(verbose_name="Описание", blank=True)
-    
-    class Meta:
-        verbose_name = "Школа магии"
-        verbose_name_plural = "Школы магии"
-    
-    def __str__(self):
-        return self.name
-
+# Классы
+# 
 class Class(models.Model):
     """Модель для классов персонажей"""
     name = models.CharField(max_length=100, verbose_name="Название класса")
@@ -86,10 +26,50 @@ class Subclass(models.Model):
         related_name='subclasses',
         verbose_name="Родительский класс"
     )
-    
+
     class Meta:
         verbose_name = "Подкласс"
         verbose_name_plural = "Подклассы"
+    
+    def __str__(self):
+        return self.name
+
+# 
+# Заклинания
+#
+
+class AreaOfEffect(models.Model):
+    """Модель для области эффекта заклинания"""
+    type = models.CharField(max_length=100, verbose_name="Тип области")
+    size = models.IntegerField(verbose_name="Размер")
+    
+    class Meta:
+        verbose_name = "Область эффекта"
+        verbose_name_plural = "Области эффекта"
+    
+    def __str__(self):
+        return f"{self.type} ({self.size})"
+
+
+class DamageType(models.Model):
+    """Модель для типов урона"""
+    name = models.CharField(max_length=100, verbose_name="Название типа урона")
+    
+    class Meta:
+        verbose_name = "Тип урона"
+        verbose_name_plural = "Типы урона"
+    
+    def __str__(self):
+        return self.name
+
+class MagicSchool(models.Model):
+    """Модель для школ магии"""
+    name = models.CharField(max_length=100, verbose_name="Название школы")
+    desc = models.TextField(verbose_name="Описание", blank=True)
+    
+    class Meta:
+        verbose_name = "Школа магии"
+        verbose_name_plural = "Школы магии"
     
     def __str__(self):
         return self.name
@@ -176,21 +156,14 @@ class Spell(models.Model):
     )
     
     index = models.SlugField(
-        max_length=100,
         unique=True,
         verbose_name="Индекс",
-        help_text="Уникальный идентификатор заклинания для API"
-    )
-    
-    url = models.URLField(
-        max_length=500,
-        verbose_name="URL",
-        help_text="URL для получения подробной информации об этом заклинании через API"
+        help_text="Уникальный идентификатор заклинания"
     )
     
     level = models.PositiveSmallIntegerField(
         verbose_name="Уровень",
-        help_text="Уровень заклинания (0 для заклинаний нулевого круга/кантипов)"
+        help_text="Уровень заклинания (0 для заклинаний нулевого круга/заговоров)"
     )
     
     casting_time = models.CharField(
@@ -314,12 +287,6 @@ class Spell(models.Model):
         help_text="Словарь, где ключ - уровень слота заклинания, значение - формула исцеления. Например: {\"1\": \"2d4\", \"2\": \"3d4\"}"
     )
     
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name="Дата обновления",
-        help_text="Дата и время последнего обновления информации о заклинании"
-    )
-    
     class Meta:
         verbose_name = "Заклинание"
         verbose_name_plural = "Заклинания"
@@ -339,6 +306,9 @@ class Spell(models.Model):
         return f"{self.name} (уровень {self.level}): {self.desc}"
 
 
+# 
+# Лист персонажа
+# 
 class CharacterSheet(models.Model):
     '''Лист персонажа'''
     name = models.CharField(max_length=100)
