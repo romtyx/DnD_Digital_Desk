@@ -312,7 +312,7 @@ class Spell(models.Model):
 class CharacterSheet(models.Model):
     '''Лист персонажа'''
     name = models.CharField(max_length=100)
-    character_class = models.CharField(max_length=50)
+    character_class = models.OneToOneField(Class)
     level = models.IntegerField(default=1)
     race = models.CharField(max_length=50)
     background = models.CharField(max_length=50, blank=True)
@@ -338,3 +338,48 @@ class CharacterSheet(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.character_class} lvl {self.level}"
+    
+class User(models.Model):
+    name = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
+    email = models.CharField(max_length=100)
+    desc = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+    
+    def __str__(self):
+        return self.name
+    
+class Player(models.Model):
+    user = models.ManyToOneRel(User)
+    character = models.ManyToOneRel(CharacterSheet)
+    class Meta:
+        verbose_name = "Игрок"
+        verbose_name_plural = "Игроки"
+    
+    def __str__(self):
+        return self.name
+    
+class session(models.Model):
+    number = models.IntegerField()
+    date = models.DateTimeField(_(""), auto_now=False, auto_now_add=False)()
+    description = models.IntegerField()
+    class Meta:
+        verbose_name = "Сессия"
+        verbose_name_plural = "Сессии"
+    
+    def __str__(self):
+        return self.name
+
+class DMnote(models.Model):
+    text = models.CharField()
+    session = models.ManyToOneRel()
+        
+    class Meta:
+        verbose_name = "Записка мастера"
+        verbose_name_plural = "Записи мастера"
+    
+    def __str__(self):
+        return self.name
