@@ -355,6 +355,8 @@ class User(models.Model):
 class Player(models.Model):
     user = models.ManyToOneRel(User)
     character = models.ManyToOneRel(CharacterSheet)
+`   `
+
     class Meta:
         verbose_name = "Игрок"
         verbose_name_plural = "Игроки"
@@ -362,24 +364,53 @@ class Player(models.Model):
     def __str__(self):
         return self.name
     
-class session(models.Model):
-    number = models.IntegerField()
-    date = models.DateTimeField(_(""), auto_now=False, auto_now_add=False)()
-    description = models.IntegerField()
-    class Meta:
-        verbose_name = "Сессия"
-        verbose_name_plural = "Сессии"
-    
-    def __str__(self):
-        return self.name
 
-class DMnote(models.Model):
+class DMNote(models.Model):
     text = models.CharField()
-    session = models.ManyToOneRel()
+    session = models.ManyToOneRel(session)
         
     class Meta:
         verbose_name = "Записка мастера"
         verbose_name_plural = "Записи мастера"
     
     def __str__(self):
+        return self.text
+
+
+class DM(models):
+    user = models.OneToOneField(User)
+    campain = models.OneToOneField(Campain)
+
+    class Meta:
+        verbose_name = "Мастер"
+        verbose_name_plural = "Мастера"
+    
+    def __str__(self):
+        return self.user
+
+
+class Campain(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.CharField()
+    WordlStory = models.CharField()
+     
+    class Meta:
+        verbose_name = "Кампания"
+        verbose_name_plural = "Кампании"
+    
+    def __str__(self):
         return self.name
+
+
+class Session(models.Model):
+    number = models.IntegerField()
+    date = models.DateTimeField(_(""), auto_now=False, auto_now_add=False)()
+    description = models.IntegerField()
+    campain = models.OneToOneField(Campain)
+
+    class Meta:
+        verbose_name = "Сессия"
+        verbose_name_plural = "Сессии"
+    
+    def __str__(self):
+        return self.number
