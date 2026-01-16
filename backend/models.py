@@ -312,7 +312,7 @@ class Spell(models.Model):
 class CharacterSheet(models.Model):
     '''Лист персонажа'''
     name = models.CharField(max_length=100)
-    character_class = models.CharField(max_length=50)
+    character_class = models.OneToOneField(Class)
     level = models.IntegerField(default=1)
     race = models.CharField(max_length=50)
     background = models.CharField(max_length=50, blank=True)
@@ -338,3 +338,79 @@ class CharacterSheet(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.character_class} lvl {self.level}"
+    
+class User(models.Model):
+    name = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
+    email = models.CharField(max_length=100)
+    desc = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name = "Пользователь"
+        verbose_name_plural = "Пользователи"
+    
+    def __str__(self):
+        return self.name
+    
+class Player(models.Model):
+    user = models.ManyToOneRel(User)
+    character = models.ManyToOneRel(CharacterSheet)
+`   `
+
+    class Meta:
+        verbose_name = "Игрок"
+        verbose_name_plural = "Игроки"
+    
+    def __str__(self):
+        return self.name
+    
+
+class DMNote(models.Model):
+    text = models.CharField()
+    session = models.ManyToOneRel(session)
+        
+    class Meta:
+        verbose_name = "Записка мастера"
+        verbose_name_plural = "Записи мастера"
+    
+    def __str__(self):
+        return self.text
+
+
+class DM(models):
+    user = models.OneToOneField(User)
+    campain = models.OneToOneField(Campain)
+
+    class Meta:
+        verbose_name = "Мастер"
+        verbose_name_plural = "Мастера"
+    
+    def __str__(self):
+        return self.user
+
+
+class Campain(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.CharField()
+    WordlStory = models.CharField()
+     
+    class Meta:
+        verbose_name = "Кампания"
+        verbose_name_plural = "Кампании"
+    
+    def __str__(self):
+        return self.name
+
+
+class Session(models.Model):
+    number = models.IntegerField()
+    date = models.DateTimeField(_(""), auto_now=False, auto_now_add=False)()
+    description = models.IntegerField()
+    campain = models.OneToOneField(Campain)
+
+    class Meta:
+        verbose_name = "Сессия"
+        verbose_name_plural = "Сессии"
+    
+    def __str__(self):
+        return self.number
