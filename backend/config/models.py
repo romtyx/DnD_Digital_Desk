@@ -108,8 +108,7 @@ class SpellDamage(models.Model):
 
 class SpellDC(models.Model):
     """Детали спасброска от заклинания"""
-    dc_type = models.ForeignKey(
-        AbilityScore,
+    dc_type = models.CharField(
         on_delete=models.CASCADE,
         verbose_name="Тип спасброска",
         help_text="Характеристика, используемая для спасброска против заклинания"
@@ -367,6 +366,7 @@ class Campain(models.Model):
     name = models.CharField(max_length=255)
     description = models.CharField()
     WordlStory = models.CharField()
+    dm = models.ForeignKey(User, on_delete=models.CASCADE, related_name="campaigns", verbose_name="Ведущий")
      
     class Meta:
         verbose_name = "Кампания"
