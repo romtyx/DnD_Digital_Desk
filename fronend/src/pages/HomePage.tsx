@@ -1,9 +1,15 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { APITester } from "../APITester";
-import logo from "../logo.svg";
-import reactLogo from "../react.svg";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
+import { APITester } from '../APITester'
+import logo from '../logo.svg'
+import reactLogo from '../react.svg'
 
 export function HomePage() {
   return (
@@ -11,12 +17,10 @@ export function HomePage() {
       <div className="flex justify-center items-center gap-8 mb-8">
         <img
           src={logo}
-          alt="Bun Logo"
           className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
         />
         <img
           src={reactLogo}
-          alt="React Logo"
           className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] [animation:spin_20s_linear_infinite]"
         />
       </div>
@@ -30,15 +34,15 @@ export function HomePage() {
         <CardContent className="space-y-4">
           <div className="flex gap-4 justify-center">
             <Button asChild>
-              <Link to="/register">Register</Link>
+              <Link to="/register">Зарегестрироваться</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to="/login">Login</Link>
+              <Link to="/login">Войти</Link>
             </Button>
           </div>
           <APITester />
         </CardContent>
       </Card>
     </div>
-  );
+  )
 }

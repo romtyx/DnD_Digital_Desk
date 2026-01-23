@@ -108,8 +108,7 @@ class SpellDamage(models.Model):
 
 class SpellDC(models.Model):
     """Детали спасброска от заклинания"""
-    dc_type = models.ForeignKey(
-        AbilityScore,
+    dc_type = models.TextField(
         on_delete=models.CASCADE,
         verbose_name="Тип спасброска",
         help_text="Характеристика, используемая для спасброска против заклинания"
@@ -374,7 +373,6 @@ class Campain(models.Model):
     
     def __str__(self):
         return self.name
-
 class Session(models.Model):
     number = models.IntegerField()
     date = models.DateTimeField((""), auto_now=False, auto_now_add=False)()
@@ -398,6 +396,7 @@ class DMNote(models.Model):
     
     def __str__(self):
         return self.text
+
 
 class DM(models):
     user = models.OneToOneField(User)
