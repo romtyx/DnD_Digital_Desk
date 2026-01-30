@@ -1,0 +1,39 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      CORS_ALLOWED_ORIGINS: "http://localhost:3000"
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./fronend
+    env_file:
+      - ./fronend/.env
+    environment:
+      PORT: "3000"
+      BACKEND_URL: "http://backend:8000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:16
+    profiles: ["localdb"]
+    environment:
+      POSTGRES_DB: dnd_desk
+      POSTGRES_USER: dnd_user
+      POSTGRES_PASSWORD: dnd_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

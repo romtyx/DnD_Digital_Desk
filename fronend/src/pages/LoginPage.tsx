@@ -31,8 +31,8 @@ export function LoginPage() {
 
     try {
       const response = await apiService.login(formData);
-      // Redirect to home page after successful login
-      navigate("/");
+      // Redirect to desk after successful login
+      navigate("/desk/campaigns");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Login failed. Please try again.";
       setErrors({ submit: errorMessage });
@@ -42,68 +42,91 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">Sign In</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {errors.submit && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/20 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800">
-                {errors.submit}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="Enter your username"
-                required
-              />
+    <div className="page-shell min-h-screen">
+      <div className="container mx-auto px-6 py-12">
+        <div className="grid lg:grid-cols-[1fr_420px] gap-10 items-center">
+          <div className="space-y-6">
+            <Link to="/" className="inline-flex items-center text-sm text-amber-100/70 hover:text-amber-100">
+              ← На главную
+            </Link>
+            <div className="space-y-4">
+              <p className="text-xs uppercase tracking-[0.35em] text-amber-100/60">
+                Вход
+              </p>
+              <h1 className="font-display text-4xl text-amber-100">
+                Вернись к хроникам.
+              </h1>
+              <p className="text-lg text-amber-100/70 max-w-lg">
+                Управляй кампаниями, добавляй заметки и держи темп сессий.
+              </p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                required
-              />
+            <div className="rounded-2xl border border-amber-700/40 bg-amber-950/60 p-4 text-sm text-amber-100/70">
+              <p className="font-medium text-amber-100">Демо-доступ</p>
+              <p>Логин: admin</p>
+              <p>Пароль: admin12345</p>
             </div>
+          </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing in..." : "Sign In"}
-            </Button>
+          <Card className="w-full rounded-3xl border-amber-700/40 bg-amber-950/70 shadow-xl shadow-amber-900/30 backdrop-blur">
+            <CardHeader>
+              <CardTitle className="font-display text-2xl text-amber-100 text-center">
+                Войти в кабинет
+              </CardTitle>
+              <CardDescription className="text-center text-amber-100/70">
+                Введите логин и пароль, чтобы продолжить.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {errors.submit && (
+                  <div className="p-3 text-sm text-red-700 bg-red-50 rounded-md border border-red-200">
+                    {errors.submit}
+                  </div>
+                )}
 
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Link
-                to="/register"
-                className="text-primary hover:underline font-medium"
-              >
-                Sign up
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Логин</Label>
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    value={formData.username}
+                    onChange={handleChange}
+                    placeholder="Введите логин"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Пароль</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Введите пароль"
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Входим..." : "Войти"}
+                </Button>
+
+                <div className="text-center text-sm">
+                  <span className="text-muted-foreground">
+                    Нет аккаунта?{" "}
+                  </span>
+                  <Link to="/register" className="text-primary hover:underline font-medium">
+                    Создать
+                  </Link>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,9 @@
 // Get API URL from environment variables (supports both Vite and Bun)
 const getApiBaseUrl = (): string => {
+  if (typeof window !== 'undefined') {
+    return '/api'
+  }
+
   try {
     // Try Vite's import.meta.env first
     const viteEnv = (import.meta as any)?.env
@@ -66,6 +70,113 @@ export interface ApiError {
   [key: string]: string | string[] | undefined
 }
 
+export interface UserProfile {
+  id: number
+  username: string
+  email: string
+  first_name: string
+  last_name: string
+  date_joined: string
+}
+
+export interface Campaign {
+  id: number
+  name: string
+  description: string
+  world_story: string
+  characters?: number[]
+  characters_detail?: {
+    id: number
+    name: string
+    character_class_name: string
+    level: number
+  }[]
+}
+
+export interface SessionItem {
+  id: number
+  number: number
+  date: string
+  description: string
+  campaign: number
+}
+
+export interface DMNote {
+  id: number
+  text: string
+  session: number
+}
+
+export interface CharacterClass {
+  id: number
+  name: string
+  hit_die: number | null
+}
+
+export interface CharacterSheet {
+  id: number
+  name: string
+  character_class: number
+  character_class_name?: string
+  level: number
+  race: string
+  background: string
+  strength: number
+  dexterity: number
+  constitution: number
+  intelligence: number
+  wisdom: number
+  charisma: number
+  max_hit_points: number
+  current_hit_points: number
+  armor_class: number
+  speed: number
+  inspiration: boolean
+  skills: string
+  equipment: string
+  spells: string
+}
+
+export interface CampaignNote {
+  id: number
+  text: string
+  campaign: number
+  created_at: string
+}
+
+export interface Storyline {
+  id: number
+  title: string
+  summary: string
+  order: number
+  campaign: number
+}
+
+export interface StoryOutcome {
+  id: number
+  title: string
+  condition: string
+  description: string
+  order: number
+  storyline: number
+}
+
+export interface ChatMessage {
+  id: number
+  text: string
+  campaign: number
+  user: number
+  user_name: string
+  created_at: string
+}
+
+export interface Paginated<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
+}
+
 class ApiService {
   private getAuthToken(): string | null {
     return localStorage.getItem('access_token')
@@ -106,18 +217,26 @@ class ApiService {
       headers,
     })
 
-    const data = await response.json()
+    const contentType = response.headers.get('content-type') || ''
+    const hasJson = contentType.includes('application/json')
+    const data = hasJson ? await response.json() : null
 
     if (!response.ok) {
-      throw new Error(
-        (data as ApiError).error ||
-          data.detail ||
-          Object.values(data).flat().join(', ') ||
-          'An error occurred',
-      )
+      const fallback = hasJson
+        ? (data as ApiError).error ||
+          (data as any).detail ||
+          Object.values(data as Record<string, string | string[] | undefined>)
+            .flat()
+            .join(', ')
+        : null
+      throw new Error(fallback || 'An error occurred')
     }
 
-    return data as T
+    if (response.status === 204) {
+      return undefined as T
+    }
+
+    return (data ?? {}) as T
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
@@ -157,6 +276,195 @@ class ApiService {
 
   isAuthenticated(): boolean {
     return !!this.getAuthToken()
+  }
+
+  async getMe(): Promise<UserProfile> {
+    return this.request<UserProfile>('/accounts/me/')
+  }
+
+  async listCampaigns(): Promise<Campaign[]> {
+    const response = await this.request<Paginated<Campaign>>('/accounts/campaigns/')
+    return response?.results ?? []
+  }
+
+  async createCampaign(data: Omit<Campaign, 'id'>): Promise<Campaign> {
+    return this.request<Campaign>('/accounts/campaigns/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateCampaign(id: number, data: Partial<Omit<Campaign, 'id'>>): Promise<Campaign> {
+    return this.request<Campaign>(`/accounts/campaigns/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteCampaign(id: number): Promise<void> {
+    await this.request<void>(`/accounts/campaigns/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async getCampaign(id: number): Promise<Campaign> {
+    return this.request<Campaign>(`/accounts/campaigns/${id}/`)
+  }
+
+  async listSessions(campaignId?: number): Promise<SessionItem[]> {
+    const query = campaignId ? `?campaign=${campaignId}` : ''
+    const response = await this.request<Paginated<SessionItem>>(`/accounts/sessions/${query}`)
+    return response?.results ?? []
+  }
+
+  async createSession(data: Omit<SessionItem, 'id'>): Promise<SessionItem> {
+    return this.request<SessionItem>('/accounts/sessions/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateSession(id: number, data: Partial<Omit<SessionItem, 'id'>>): Promise<SessionItem> {
+    return this.request<SessionItem>(`/accounts/sessions/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteSession(id: number): Promise<void> {
+    await this.request<void>(`/accounts/sessions/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async listNotes(sessionId?: number): Promise<DMNote[]> {
+    const query = sessionId ? `?session=${sessionId}` : ''
+    const response = await this.request<Paginated<DMNote>>(`/accounts/dm-notes/${query}`)
+    return response?.results ?? []
+  }
+
+  async createNote(data: Omit<DMNote, 'id'>): Promise<DMNote> {
+    return this.request<DMNote>('/accounts/dm-notes/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateNote(id: number, data: Partial<Omit<DMNote, 'id'>>): Promise<DMNote> {
+    return this.request<DMNote>(`/accounts/dm-notes/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteNote(id: number): Promise<void> {
+    await this.request<void>(`/accounts/dm-notes/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async listClasses(): Promise<CharacterClass[]> {
+    const response = await this.request<Paginated<CharacterClass>>('/accounts/classes/')
+    return response?.results ?? []
+  }
+
+  async listCharacters(): Promise<CharacterSheet[]> {
+    const response = await this.request<Paginated<CharacterSheet>>('/accounts/characters/')
+    return response?.results ?? []
+  }
+
+  async createCharacter(data: Partial<CharacterSheet>): Promise<CharacterSheet> {
+    return this.request<CharacterSheet>('/accounts/characters/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async updateCharacter(id: number, data: Partial<CharacterSheet>): Promise<CharacterSheet> {
+    return this.request<CharacterSheet>(`/accounts/characters/${id}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteCharacter(id: number): Promise<void> {
+    await this.request<void>(`/accounts/characters/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async listCampaignNotes(campaignId: number): Promise<CampaignNote[]> {
+    const response = await this.request<Paginated<CampaignNote>>(
+      `/accounts/campaign-notes/?campaign=${campaignId}`,
+    )
+    return response?.results ?? []
+  }
+
+  async createCampaignNote(data: Omit<CampaignNote, 'id' | 'created_at'>): Promise<CampaignNote> {
+    return this.request<CampaignNote>('/accounts/campaign-notes/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteCampaignNote(id: number): Promise<void> {
+    await this.request<void>(`/accounts/campaign-notes/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async listStorylines(campaignId: number): Promise<Storyline[]> {
+    const response = await this.request<Paginated<Storyline>>(
+      `/accounts/storylines/?campaign=${campaignId}`,
+    )
+    return response?.results ?? []
+  }
+
+  async createStoryline(data: Omit<Storyline, 'id'>): Promise<Storyline> {
+    return this.request<Storyline>('/accounts/storylines/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteStoryline(id: number): Promise<void> {
+    await this.request<void>(`/accounts/storylines/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async listStoryOutcomes(storylineId: number): Promise<StoryOutcome[]> {
+    const response = await this.request<Paginated<StoryOutcome>>(
+      `/accounts/story-outcomes/?storyline=${storylineId}`,
+    )
+    return response?.results ?? []
+  }
+
+  async createStoryOutcome(data: Omit<StoryOutcome, 'id'>): Promise<StoryOutcome> {
+    return this.request<StoryOutcome>('/accounts/story-outcomes/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async deleteStoryOutcome(id: number): Promise<void> {
+    await this.request<void>(`/accounts/story-outcomes/${id}/`, {
+      method: 'DELETE',
+    })
+  }
+
+  async listChatMessages(campaignId: number): Promise<ChatMessage[]> {
+    const response = await this.request<Paginated<ChatMessage>>(
+      `/accounts/chat-messages/?campaign=${campaignId}`,
+    )
+    return response?.results ?? []
+  }
+
+  async sendChatMessage(data: Omit<ChatMessage, 'id' | 'user' | 'user_name' | 'created_at'>): Promise<ChatMessage> {
+    return this.request<ChatMessage>('/accounts/chat-messages/', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
   }
 }
 

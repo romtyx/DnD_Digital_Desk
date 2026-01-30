@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.postgres.fields import ArrayField, JSONField
 
 
 # 
@@ -8,403 +8,508 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 class Class(models.Model):
     """Модель для классов персонажей"""
     name = models.CharField(max_length=100, verbose_name="Название класса")
-    hit_die = models.IntegerField(verbose_name="Кость хитов", null=True)
-    
+    hit_die = models.PositiveSmallIntegerField(
+        verbose_name="Кость хитов",
+        null=True,
+        blank=True,
+    )
+
     class Meta:
         verbose_name = "Класс"
         verbose_name_plural = "Классы"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return self.name
+
 
 class Subclass(models.Model):
     """Модель для подклассов"""
     name = models.CharField(max_length=100, verbose_name="Название подкласса")
     parent_class = models.ForeignKey(
-        Class, 
-        on_delete=models.CASCADE, 
-        related_name='subclasses',
-        verbose_name="Родительский класс"
+        Class,
+        on_delete=models.CASCADE,
+        related_name="subclasses",
+        verbose_name="Родительский класс",
     )
 
     class Meta:
         verbose_name = "Подкласс"
         verbose_name_plural = "Подклассы"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return self.name
+
 
 # 
 # Заклинания
 #
-
 class AreaOfEffect(models.Model):
     """Модель для области эффекта заклинания"""
     type = models.CharField(max_length=100, verbose_name="Тип области")
-    size = models.IntegerField(verbose_name="Размер")
-    
+    size = models.PositiveIntegerField(verbose_name="Размер")
+
     class Meta:
         verbose_name = "Область эффекта"
         verbose_name_plural = "Области эффекта"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return f"{self.type} ({self.size})"
 
 
 class DamageType(models.Model):
     """Модель для типов урона"""
     name = models.CharField(max_length=100, verbose_name="Название типа урона")
-    
+
     class Meta:
         verbose_name = "Тип урона"
         verbose_name_plural = "Типы урона"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return self.name
+
 
 class MagicSchool(models.Model):
     """Модель для школ магии"""
     name = models.CharField(max_length=100, verbose_name="Название школы")
     desc = models.TextField(verbose_name="Описание", blank=True)
-    
+
     class Meta:
         verbose_name = "Школа магии"
         verbose_name_plural = "Школы магии"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return self.name
+
 
 class SpellDamage(models.Model):
     """Детали урона от заклинания"""
     damage_type = models.ForeignKey(
-        DamageType, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        DamageType,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
         verbose_name="Тип урона",
-        help_text="Тип урона, который наносит заклинание (огонь, холод, яд и т.д.)"
+        help_text="Тип урона, который наносит заклинание (огонь, холод, яд и т.д.)",
     )
-    
-    damage_at_slot_level = JSONField(
-        null=True, 
+
+    damage_at_slot_level = models.JSONField(
+        null=True,
         blank=True,
         verbose_name="Урон по уровням слотов",
-        help_text="Словарь, где ключ - уровень слота заклинания, значение - формула урона. Например: {\"1\": \"2d6\", \"2\": \"3d6\"}"
+        help_text=(
+            "Словарь, где ключ - уровень слота заклинания, значение - формула урона. "
+            "Например: {\"1\": \"2d6\", \"2\": \"3d6\"}"
+        ),
     )
-    
-    damage_at_character_level = JSONField(
-        null=True, 
+
+    damage_at_character_level = models.JSONField(
+        null=True,
         blank=True,
         verbose_name="Урон по уровням персонажа",
-        help_text="Словарь, где ключ - уровень персонажа, значение - формула урона. Например: {\"5\": \"3d8\", \"10\": \"4d8\"}"
+        help_text=(
+            "Словарь, где ключ - уровень персонажа, значение - формула урона. "
+            "Например: {\"5\": \"3d8\", \"10\": \"4d8\"}"
+        ),
     )
-    
+
     class Meta:
         verbose_name = "Урон заклинания"
         verbose_name_plural = "Уроны заклинаний"
-    
-    def __str__(self):
-        return f"Урон для заклинания"
+
+    def __str__(self) -> str:
+        return "Урон для заклинания"
+
 
 class SpellDC(models.Model):
     """Детали спасброска от заклинания"""
-    dc_type = models.TextField(
-        on_delete=models.CASCADE,
+    dc_type = models.CharField(
+        max_length=50,
         verbose_name="Тип спасброска",
-        help_text="Характеристика, используемая для спасброска против заклинания"
+        help_text="Характеристика, используемая для спасброска против заклинания",
     )
-    
+
     DC_SUCCESS_CHOICES = [
-        ('half', 'Половина урона'),
-        ('none', 'Нет эффекта'),
-        ('full', 'Полный эффект'),
-        ('quarter', 'Четверть урона'),
+        ("half", "Половина урона"),
+        ("none", "Нет эффекта"),
+        ("full", "Полный эффект"),
+        ("quarter", "Четверть урона"),
     ]
-    
+
     dc_success = models.CharField(
         max_length=20,
         choices=DC_SUCCESS_CHOICES,
         verbose_name="Результат успешного спасброска",
-        help_text="Что происходит при успешном спасброске: половина урона, нет эффекта и т.д."
+        help_text=(
+            "Что происходит при успешном спасброске: половина урона, нет эффекта и т.д."
+        ),
     )
-    
+
     desc = models.TextField(
-        null=True, 
+        null=True,
         blank=True,
         verbose_name="Дополнительное описание",
-        help_text="Дополнительные детали о спасброске против этого заклинания"
+        help_text="Дополнительные детали о спасброске против этого заклинания",
     )
-    
+
     class Meta:
         verbose_name = "Спасбросок заклинания"
         verbose_name_plural = "Спасброски заклинаний"
         indexes = [
-            models.Index(fields=['dc_success']),
+            models.Index(fields=["dc_success"]),
         ]
-    
-    def __str__(self):
-        return f"Спасбросок: {self.dc_success} ({self.dc_type.name})"
+
+    def __str__(self) -> str:
+        return f"Спасбросок: {self.dc_success} ({self.dc_type})"
+
 
 class Spell(models.Model):
     """Основная модель заклинания для Dungeons & Dragons"""
-    
+
     name = models.CharField(
         max_length=255,
         verbose_name="Название",
-        help_text="Полное название заклинания"
+        help_text="Полное название заклинания",
     )
-    
+
     index = models.SlugField(
         unique=True,
         verbose_name="Индекс",
-        help_text="Уникальный идентификатор заклинания"
+        help_text="Уникальный идентификатор заклинания",
     )
-    
+
     level = models.PositiveSmallIntegerField(
         verbose_name="Уровень",
-        help_text="Уровень заклинания (0 для заклинаний нулевого круга/заговоров)"
+        help_text="Уровень заклинания (0 для заклинаний нулевого круга/заговоров)",
     )
-    
+
     casting_time = models.CharField(
         max_length=100,
         verbose_name="Время накладывания",
-        help_text="Сколько времени требуется для накладывания заклинания (1 действие, 1 минута, 8 часов и т.д.)"
+        help_text="Сколько времени требуется для накладывания заклинания (1 действие, 1 минута, 8 часов и т.д.)",
     )
-    
+
     duration = models.CharField(
         max_length=100,
         verbose_name="Длительность",
-        help_text="Как долго действует заклинание (мгновенно, 1 минута, до рассеивания и т.д.)"
+        help_text="Как долго действует заклинание (мгновенно, 1 минута, до рассеивания и т.д.)",
     )
-    
+
     range = models.CharField(
         max_length=100,
         verbose_name="Дистанция",
-        help_text="На каком расстоянии можно наложить заклинание (дотягиваемся, 30 футов, 1 миля и т.д.)"
+        help_text="На каком расстоянии можно наложить заклинание (дотягиваемся, 30 футов, 1 миля и т.д.)",
     )
-    
-    components = ArrayField(
-        models.CharField(max_length=10),
+
+    components = models.JSONField(
+        default=list,
         verbose_name="Компоненты",
-        help_text="Необходимые компоненты для накладывания: V (вербальный), S (соматический), M (материальный)"
+        help_text="Необходимые компоненты для накладывания: V (вербальный), S (соматический), M (материальный)",
     )
-    
+
     ritual = models.BooleanField(
         default=False,
         verbose_name="Ритуал",
-        help_text="Можно ли наложить это заклинание как ритуал (без расхода слота заклинания)"
+        help_text="Можно ли наложить это заклинание как ритуал (без расхода слота заклинания)",
     )
-    
+
     concentration = models.BooleanField(
         default=False,
         verbose_name="Концентрация",
-        help_text="Требует ли заклинание концентрации для поддержания эффекта"
+        help_text="Требует ли заклинание концентрации для поддержания эффекта",
     )
-    
-    desc = ArrayField(
-        models.TextField(),
+
+    desc = models.JSONField(
+        default=list,
         verbose_name="Описание",
-        help_text="Основное описание эффектов заклинания, каждая строка - отдельный абзац"
+        help_text="Основное описание эффектов заклинания, каждая строка - отдельный абзац",
     )
-    
-    higher_level = ArrayField(
-        models.TextField(),
-        null=True,
+
+    higher_level = models.JSONField(
+        default=list,
         blank=True,
         verbose_name="Эффекты на более высоких уровнях",
-        help_text="Дополнительные эффекты или усиления при наложении заклинания с использованием слотов более высокого уровня"
+        help_text=(
+            "Дополнительные эффекты или усиления при наложении заклинания с использованием слотов более высокого уровня"
+        ),
     )
-    
+
     material = models.TextField(
         null=True,
         blank=True,
         verbose_name="Материальные компоненты",
-        help_text="Описание специфических материальных компонентов, если они требуются и имеют особую ценность или свойства"
+        help_text="Описание специфических материальных компонентов, если они требуются и имеют особую ценность или свойства",
     )
-    
+
     attack_type = models.CharField(
         max_length=50,
         null=True,
         blank=True,
         verbose_name="Тип атаки",
-        help_text="Тип атаки, если заклинание требует броска атаки (ближняя, дальнобойная и т.д.)"
+        help_text="Тип атаки, если заклинание требует броска атаки (ближняя, дальнобойная и т.д.)",
     )
-    
+
     area_of_effect = models.ForeignKey(
         AreaOfEffect,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name="Область эффекта",
-        help_text="Детали области, на которую распространяется действие заклинания (конус, сфера, куб и т.д.)"
+        help_text="Детали области, на которую распространяется действие заклинания (конус, сфера, куб и т.д.)",
     )
-    
+
     school = models.ForeignKey(
         MagicSchool,
         on_delete=models.CASCADE,
         verbose_name="Школа магии",
-        help_text="Школа магии, к которой принадлежит заклинание (очарование, иллюзия, разрушение и т.д.)"
+        help_text="Школа магии, к которой принадлежит заклинание (очарование, иллюзия, разрушение и т.д.)",
     )
-    
+
     damage = models.OneToOneField(
         SpellDamage,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name="Урон",
-        help_text="Детали урона, наносимого заклинанием, включая тип урона и формулы по уровням"
+        help_text="Детали урона, наносимого заклинанием, включая тип урона и формулы по уровням",
     )
-    
+
     dc = models.OneToOneField(
         SpellDC,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         verbose_name="Спасбросок",
-        help_text="Детали спасброска, который должны совершать цели для сопротивления эффектам заклинания"
+        help_text="Детали спасброска, который должны совершать цели для сопротивления эффектам заклинания",
     )
-    
+
     classes = models.ManyToManyField(
         Class,
-        related_name='spells',
+        related_name="spells",
+        blank=True,
         verbose_name="Классы",
-        help_text="Классы персонажей, которые могут изучать и использовать это заклинание"
+        help_text="Классы персонажей, которые могут изучать и использовать это заклинание",
     )
-    
+
     subclasses = models.ManyToManyField(
         Subclass,
-        related_name='spells',
+        related_name="spells",
         blank=True,
         verbose_name="Подклассы",
-        help_text="Подклассы, которые получают доступ к этому заклинанию (если применимо)"
+        help_text="Подклассы, которые получают доступ к этому заклинанию (если применимо)",
     )
-    
-    heal_at_slot_level = JSONField(
+
+    heal_at_slot_level = models.JSONField(
         null=True,
         blank=True,
         verbose_name="Исцеление по уровням слотов",
-        help_text="Словарь, где ключ - уровень слота заклинания, значение - формула исцеления. Например: {\"1\": \"2d4\", \"2\": \"3d4\"}"
+        help_text=(
+            "Словарь, где ключ - уровень слота заклинания, значение - формула исцеления. "
+            "Например: {\"1\": \"2d4\", \"2\": \"3d4\"}"
+        ),
     )
-    
+
     class Meta:
         verbose_name = "Заклинание"
         verbose_name_plural = "Заклинания"
         indexes = [
-            models.Index(fields=['name']),
-            models.Index(fields=['level']),
-            models.Index(fields=['index']),
-            models.Index(fields=['casting_time']),
-            models.Index(fields=['duration']),
-            models.Index(fields=['range']),
-            models.Index(fields=['ritual']),
+            models.Index(fields=["name"]),
+            models.Index(fields=["level"]),
+            models.Index(fields=["index"]),
+            models.Index(fields=["casting_time"]),
+            models.Index(fields=["duration"]),
+            models.Index(fields=["range"]),
+            models.Index(fields=["ritual"]),
         ]
-        ordering = ['name', 'level']
-        db_table = 'dnd_spells'
-    
-    def __str__(self):
-        return f"{self.name} (уровень {self.level}): {self.desc}"
+        ordering = ["name", "level"]
+        db_table = "dnd_spells"
+
+    def __str__(self) -> str:
+        return f"{self.name} (уровень {self.level})"
 
 
 # 
 # Лист персонажа
 # 
 class CharacterSheet(models.Model):
-    '''Лист персонажа'''
+    """Лист персонажа"""
     name = models.CharField(max_length=100)
-    character_class = models.OneToOneField(Class)
-    level = models.IntegerField(default=1)
+    character_class = models.ForeignKey(
+        Class,
+        on_delete=models.PROTECT,
+        related_name="characters",
+    )
+    level = models.PositiveSmallIntegerField(default=1)
     race = models.CharField(max_length=50)
     background = models.CharField(max_length=50, blank=True)
-    
+
     strength = models.IntegerField(default=10)
     dexterity = models.IntegerField(default=10)
     constitution = models.IntegerField(default=10)
     intelligence = models.IntegerField(default=10)
     wisdom = models.IntegerField(default=10)
     charisma = models.IntegerField(default=10)
-    
+
     max_hit_points = models.IntegerField(default=10)
     current_hit_points = models.IntegerField(default=10)
     armor_class = models.IntegerField(default=10)
     speed = models.IntegerField(default=30)
-    
+
     inspiration = models.BooleanField(default=False)
-    
+
     skills = models.TextField(blank=True)
     equipment = models.TextField(blank=True)
     spells = models.TextField(blank=True)
 
-
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} - {self.character_class} lvl {self.level}"
-    
-class User(models.Model):
-    name = models.CharField(max_length=100)
-    password = models.CharField(max_length=100)
-    email = models.CharField(max_length=100)
-    desc = models.CharField(max_length=100)
 
-    class Meta:
-        verbose_name = "Пользователь"
-        verbose_name_plural = "Пользователи"
-    
-    def __str__(self):
-        return self.name
-    
+
 class Player(models.Model):
-    user = models.ManyToOneRel(User)
-    character = models.ManyToOneRel(CharacterSheet)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="players",
+    )
+    character = models.ForeignKey(
+        CharacterSheet,
+        on_delete=models.CASCADE,
+        related_name="players",
+    )
 
     class Meta:
         verbose_name = "Игрок"
         verbose_name_plural = "Игроки"
-    
-    def __str__(self):
-        return self.name
-    
-class Campain(models.Model):
+
+    def __str__(self) -> str:
+        return f"{self.user} - {self.character}"
+
+
+class Campaign(models.Model):
     name = models.CharField(max_length=255)
-    description = models.CharField()
-    WordlStory = models.CharField()
-     
+    description = models.TextField(blank=True)
+    world_story = models.TextField(blank=True)
+    characters = models.ManyToManyField(
+        CharacterSheet,
+        related_name="campaigns",
+        blank=True,
+    )
+
     class Meta:
         verbose_name = "Кампания"
         verbose_name_plural = "Кампании"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return self.name
+
+
 class Session(models.Model):
-    number = models.IntegerField()
-    date = models.DateTimeField((""), auto_now=False, auto_now_add=False)()
-    description = models.IntegerField()
-    campain = models.OneToOneField(Campain)
+    number = models.PositiveIntegerField()
+    date = models.DateTimeField(verbose_name="Дата")
+    description = models.TextField(blank=True)
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="sessions",
+    )
 
     class Meta:
         verbose_name = "Сессия"
         verbose_name_plural = "Сессии"
-    
-    def __str__(self):
-        return self.number
+
+    def __str__(self) -> str:
+        return f"Сессия {self.number}"
+
 
 class DMNote(models.Model):
-    text = models.CharField()
-    session = models.ManyToOneRel(Session)
-        
+    text = models.TextField()
+    session = models.ForeignKey(
+        Session,
+        on_delete=models.CASCADE,
+        related_name="dm_notes",
+    )
+
     class Meta:
         verbose_name = "Записка мастера"
         verbose_name_plural = "Записи мастера"
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return self.text
 
 
-class DM(models):
-    user = models.OneToOneField(User)
-    campain = models.OneToOneField(Campain)
+class CampaignNote(models.Model):
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="notes",
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Мастер"
-        verbose_name_plural = "Мастера"
-    
-    def __str__(self):
-        return self.user
+        verbose_name = "Заметка кампании"
+        verbose_name_plural = "Заметки кампании"
+
+    def __str__(self) -> str:
+        return self.text
+
+
+class Storyline(models.Model):
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="storylines",
+    )
+    title = models.CharField(max_length=255)
+    summary = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        verbose_name = "Линия сюжета"
+        verbose_name_plural = "Линии сюжета"
+        ordering = ["order", "id"]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class StoryOutcome(models.Model):
+    storyline = models.ForeignKey(
+        Storyline,
+        on_delete=models.CASCADE,
+        related_name="outcomes",
+    )
+    title = models.CharField(max_length=255)
+    condition = models.TextField(blank=True)
+    description = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        verbose_name = "Исход события"
+        verbose_name_plural = "Исходы событий"
+        ordering = ["order", "id"]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class ChatMessage(models.Model):
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="chat_messages",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="chat_messages",
+    )
+    text = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Сообщение чата"
+        verbose_name_plural = "Сообщения чата"
+        ordering = ["created_at", "id"]
+
+    def __str__(self) -> str:
+        return f"{self.user}: {self.text[:30]}"

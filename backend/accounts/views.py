@@ -1,10 +1,33 @@
-from rest_framework import status, generics, permissions
+from rest_framework import status, generics, permissions, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .serializers import RegisterSerializer, UserSerializer
+from .serializers import (
+    RegisterSerializer,
+    UserSerializer,
+    CampaignSerializer,
+    SessionSerializer,
+    DMNoteSerializer,
+    ClassSerializer,
+    CharacterSheetSerializer,
+    CampaignNoteSerializer,
+    StorylineSerializer,
+    StoryOutcomeSerializer,
+    ChatMessageSerializer,
+)
+from .models import (
+    Campaign,
+    Session,
+    DMNote,
+    Class,
+    CharacterSheet,
+    CampaignNote,
+    Storyline,
+    StoryOutcome,
+    ChatMessage,
+)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -147,3 +170,96 @@ class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
+
+class CampaignViewSet(viewsets.ModelViewSet):
+    queryset = Campaign.objects.all().order_by("id")
+    serializer_class = CampaignSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class SessionViewSet(viewsets.ModelViewSet):
+    serializer_class = SessionSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = Session.objects.select_related("campaign").all().order_by("id")
+        campaign_id = self.request.query_params.get("campaign")
+        if campaign_id:
+            queryset = queryset.filter(campaign_id=campaign_id)
+        return queryset
+
+
+class DMNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = DMNoteSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = DMNote.objects.select_related("session").all().order_by("id")
+        session_id = self.request.query_params.get("session")
+        if session_id:
+            queryset = queryset.filter(session_id=session_id)
+        return queryset
+
+
+class ClassViewSet(viewsets.ModelViewSet):
+    queryset = Class.objects.all().order_by("id")
+    serializer_class = ClassSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class CharacterSheetViewSet(viewsets.ModelViewSet):
+    queryset = CharacterSheet.objects.select_related("character_class").all().order_by("id")
+    serializer_class = CharacterSheetSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
+class CampaignNoteViewSet(viewsets.ModelViewSet):
+    serializer_class = CampaignNoteSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = CampaignNote.objects.select_related("campaign").all().order_by("-created_at")
+        campaign_id = self.request.query_params.get("campaign")
+        if campaign_id:
+            queryset = queryset.filter(campaign_id=campaign_id)
+        return queryset
+
+
+class StorylineViewSet(viewsets.ModelViewSet):
+    serializer_class = StorylineSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = Storyline.objects.select_related("campaign").all()
+        campaign_id = self.request.query_params.get("campaign")
+        if campaign_id:
+            queryset = queryset.filter(campaign_id=campaign_id)
+        return queryset.order_by("order", "id")
+
+
+class StoryOutcomeViewSet(viewsets.ModelViewSet):
+    serializer_class = StoryOutcomeSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = StoryOutcome.objects.select_related("storyline").all()
+        storyline_id = self.request.query_params.get("storyline")
+        if storyline_id:
+            queryset = queryset.filter(storyline_id=storyline_id)
+        return queryset.order_by("order", "id")
+
+
+class ChatMessageViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatMessageSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = ChatMessage.objects.select_related("user", "campaign").all()
+        campaign_id = self.request.query_params.get("campaign")
+        if campaign_id:
+            queryset = queryset.filter(campaign_id=campaign_id)
+        return queryset.order_by("created_at", "id")
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

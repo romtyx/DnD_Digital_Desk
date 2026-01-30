@@ -1,0 +1,38 @@
+from django.contrib import admin
+from .models import (
+    Campaign,
+    Session,
+    DMNote,
+    Class,
+    Subclass,
+    Spell,
+    SpellDamage,
+    SpellDC,
+    DamageType,
+    MagicSchool,
+    AreaOfEffect,
+    CharacterSheet,
+    Player,
+    CampaignNote,
+    Storyline,
+    StoryOutcome,
+    ChatMessage,
+)
+
+admin.site.register(Campaign)
+admin.site.register(Session)
+admin.site.register(DMNote)
+admin.site.register(Class)
+admin.site.register(Subclass)
+admin.site.register(Spell)
+admin.site.register(SpellDamage)
+admin.site.register(SpellDC)
+admin.site.register(DamageType)
+admin.site.register(MagicSchool)
+admin.site.register(AreaOfEffect)
+admin.site.register(CharacterSheet)
+admin.site.register(Player)
+admin.site.register(CampaignNote)
+admin.site.register(Storyline)
+admin.site.register(StoryOutcome)
+admin.site.register(ChatMessage)
