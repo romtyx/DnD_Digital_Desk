@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { apiService, type CampaignNote } from "@/services/api";
+import { apiService, type Campaign, type CampaignNote } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 
 interface DeskContext {
   selectedCampaignId: number | null;
+  selectedCampaign: Campaign | null;
 }
 
 export function CampaignNotesPage() {
-  const { selectedCampaignId } = useOutletContext<DeskContext>();
+  const { selectedCampaignId, selectedCampaign } = useOutletContext<DeskContext>();
+  const isOwner = selectedCampaign?.is_owner ?? false;
   const [notes, setNotes] = useState<CampaignNote[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -84,9 +86,11 @@ export function CampaignNotesPage() {
                     {new Date(note.created_at).toLocaleString()}
                   </p>
                 </div>
-                <Button size="sm" variant="destructive" onClick={() => handleDelete(note.id)}>
-                  Удалить
-                </Button>
+                {isOwner && (
+                  <Button size="sm" variant="destructive" onClick={() => handleDelete(note.id)}>
+                    Удалить
+                  </Button>
+                )}
               </div>
             </div>
           ))}
@@ -94,14 +98,20 @@ export function CampaignNotesPage() {
             <p className="text-sm text-amber-100/70">Пока нет заметок.</p>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-2">
-            <Textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              placeholder="Запись мастера"
-            />
-            <Button type="submit">Добавить заметку</Button>
-          </form>
+          {isOwner ? (
+            <form onSubmit={handleSubmit} className="space-y-2">
+              <Textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Запись мастера"
+              />
+              <Button type="submit">Добавить заметку</Button>
+            </form>
+          ) : (
+            <p className="text-sm text-amber-100/70">
+              Только владелец кампании может добавлять и удалять заметки.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

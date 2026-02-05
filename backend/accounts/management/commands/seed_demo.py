@@ -34,10 +34,14 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("Campaigns already exist. Skipping seed."))
             return
 
+        owner = User.objects.first()
         campaign = Campaign.objects.create(
             name="Приключение в Штормграде",
             description="Демо‑кампания для быстрых проверок.",
             world_story="Герои отправляются в древние руины у моря.",
+            owner=owner,
+            is_public=True,
+            max_players=4,
         )
 
         session1 = Session.objects.create(
@@ -71,6 +75,7 @@ class Command(BaseCommand):
                 level=3,
                 race="Человек",
                 background="Наемник",
+                owner=owner,
                 strength=16,
                 dexterity=12,
                 constitution=14,
@@ -91,6 +96,7 @@ class Command(BaseCommand):
                 level=3,
                 race="Эльф",
                 background="Ученик арканиста",
+                owner=owner,
                 intelligence=16,
                 wisdom=12,
                 charisma=10,

@@ -1,3 +1,6 @@
+import secrets
+import string
+
 from django.conf import settings
 from django.db import models
 
@@ -332,7 +335,15 @@ class Spell(models.Model):
 # 
 class CharacterSheet(models.Model):
     """Лист персонажа"""
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="character_sheets",
+        null=True,
+        blank=True,
+    )
     name = models.CharField(max_length=100)
+    player_name = models.CharField(max_length=100, blank=True)
     character_class = models.ForeignKey(
         Class,
         on_delete=models.PROTECT,
@@ -341,24 +352,147 @@ class CharacterSheet(models.Model):
     level = models.PositiveSmallIntegerField(default=1)
     race = models.CharField(max_length=50)
     background = models.CharField(max_length=50, blank=True)
+    alignment = models.CharField(max_length=50, blank=True)
+    experience_points = models.PositiveIntegerField(default=0)
 
     strength = models.IntegerField(default=10)
+    strength_mod = models.IntegerField(default=0)
     dexterity = models.IntegerField(default=10)
+    dexterity_mod = models.IntegerField(default=0)
     constitution = models.IntegerField(default=10)
+    constitution_mod = models.IntegerField(default=0)
     intelligence = models.IntegerField(default=10)
+    intelligence_mod = models.IntegerField(default=0)
     wisdom = models.IntegerField(default=10)
+    wisdom_mod = models.IntegerField(default=0)
     charisma = models.IntegerField(default=10)
+    charisma_mod = models.IntegerField(default=0)
+
+    saving_throw_strength = models.IntegerField(default=0)
+    saving_throw_strength_prof = models.BooleanField(default=False)
+    saving_throw_dexterity = models.IntegerField(default=0)
+    saving_throw_dexterity_prof = models.BooleanField(default=False)
+    saving_throw_constitution = models.IntegerField(default=0)
+    saving_throw_constitution_prof = models.BooleanField(default=False)
+    saving_throw_intelligence = models.IntegerField(default=0)
+    saving_throw_intelligence_prof = models.BooleanField(default=False)
+    saving_throw_wisdom = models.IntegerField(default=0)
+    saving_throw_wisdom_prof = models.BooleanField(default=False)
+    saving_throw_charisma = models.IntegerField(default=0)
+    saving_throw_charisma_prof = models.BooleanField(default=False)
+
+    skill_acrobatics = models.IntegerField(default=0)
+    skill_acrobatics_prof = models.BooleanField(default=False)
+    skill_animal_handling = models.IntegerField(default=0)
+    skill_animal_handling_prof = models.BooleanField(default=False)
+    skill_arcana = models.IntegerField(default=0)
+    skill_arcana_prof = models.BooleanField(default=False)
+    skill_athletics = models.IntegerField(default=0)
+    skill_athletics_prof = models.BooleanField(default=False)
+    skill_deception = models.IntegerField(default=0)
+    skill_deception_prof = models.BooleanField(default=False)
+    skill_history = models.IntegerField(default=0)
+    skill_history_prof = models.BooleanField(default=False)
+    skill_insight = models.IntegerField(default=0)
+    skill_insight_prof = models.BooleanField(default=False)
+    skill_intimidation = models.IntegerField(default=0)
+    skill_intimidation_prof = models.BooleanField(default=False)
+    skill_investigation = models.IntegerField(default=0)
+    skill_investigation_prof = models.BooleanField(default=False)
+    skill_medicine = models.IntegerField(default=0)
+    skill_medicine_prof = models.BooleanField(default=False)
+    skill_nature = models.IntegerField(default=0)
+    skill_nature_prof = models.BooleanField(default=False)
+    skill_perception = models.IntegerField(default=0)
+    skill_perception_prof = models.BooleanField(default=False)
+    skill_performance = models.IntegerField(default=0)
+    skill_performance_prof = models.BooleanField(default=False)
+    skill_persuasion = models.IntegerField(default=0)
+    skill_persuasion_prof = models.BooleanField(default=False)
+    skill_religion = models.IntegerField(default=0)
+    skill_religion_prof = models.BooleanField(default=False)
+    skill_sleight_of_hand = models.IntegerField(default=0)
+    skill_sleight_of_hand_prof = models.BooleanField(default=False)
+    skill_stealth = models.IntegerField(default=0)
+    skill_stealth_prof = models.BooleanField(default=False)
+    skill_survival = models.IntegerField(default=0)
+    skill_survival_prof = models.BooleanField(default=False)
 
     max_hit_points = models.IntegerField(default=10)
     current_hit_points = models.IntegerField(default=10)
+    temporary_hit_points = models.IntegerField(default=0)
     armor_class = models.IntegerField(default=10)
+    initiative = models.IntegerField(default=0)
     speed = models.IntegerField(default=30)
 
     inspiration = models.BooleanField(default=False)
+    proficiency_bonus = models.IntegerField(default=2)
+    passive_perception = models.IntegerField(default=10)
+    hit_dice_total = models.PositiveSmallIntegerField(default=0)
+    hit_dice_used = models.PositiveSmallIntegerField(default=0)
+    hit_dice_type = models.CharField(max_length=10, blank=True)
+    death_save_successes = models.PositiveSmallIntegerField(default=0)
+    death_save_failures = models.PositiveSmallIntegerField(default=0)
 
     skills = models.TextField(blank=True)
     equipment = models.TextField(blank=True)
     spells = models.TextField(blank=True)
+    treasure = models.TextField(blank=True)
+    attacks = models.TextField(blank=True)
+    attacks_and_spells = models.TextField(blank=True)
+    other_proficiencies = models.TextField(blank=True)
+
+    personality_traits = models.TextField(blank=True)
+    ideals = models.TextField(blank=True)
+    bonds = models.TextField(blank=True)
+    flaws = models.TextField(blank=True)
+    features_traits = models.TextField(blank=True)
+
+    age = models.CharField(max_length=50, blank=True)
+    height = models.CharField(max_length=50, blank=True)
+    weight = models.CharField(max_length=50, blank=True)
+    eyes = models.CharField(max_length=50, blank=True)
+    skin = models.CharField(max_length=50, blank=True)
+    hair = models.CharField(max_length=50, blank=True)
+    appearance = models.TextField(blank=True)
+    appearance_image = models.ImageField(upload_to="character_sheets/appearance", blank=True, null=True)
+    symbol_image = models.ImageField(upload_to="character_sheets/symbols", blank=True, null=True)
+    backstory = models.TextField(blank=True)
+    allies_organizations = models.TextField(blank=True)
+    additional_features = models.TextField(blank=True)
+
+    spellcasting_class = models.CharField(max_length=100, blank=True)
+    spellcasting_ability = models.CharField(max_length=50, blank=True)
+    spell_save_dc = models.IntegerField(default=0)
+    spell_attack_bonus = models.IntegerField(default=0)
+    spells_cantrips = models.TextField(blank=True)
+    spell_slots_1_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_1_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_1 = models.TextField(blank=True)
+    spell_slots_2_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_2_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_2 = models.TextField(blank=True)
+    spell_slots_3_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_3_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_3 = models.TextField(blank=True)
+    spell_slots_4_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_4_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_4 = models.TextField(blank=True)
+    spell_slots_5_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_5_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_5 = models.TextField(blank=True)
+    spell_slots_6_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_6_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_6 = models.TextField(blank=True)
+    spell_slots_7_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_7_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_7 = models.TextField(blank=True)
+    spell_slots_8_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_8_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_8 = models.TextField(blank=True)
+    spell_slots_9_total = models.PositiveSmallIntegerField(default=0)
+    spell_slots_9_used = models.PositiveSmallIntegerField(default=0)
+    spells_level_9 = models.TextField(blank=True)
 
     def __str__(self) -> str:
         return f"{self.name} - {self.character_class} lvl {self.level}"
@@ -388,11 +522,29 @@ class Campaign(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     world_story = models.TextField(blank=True)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="owned_campaigns",
+        null=True,
+        blank=True,
+    )
+    is_public = models.BooleanField(default=True)
+    max_players = models.PositiveSmallIntegerField(default=4)
+    join_code = models.CharField(
+        max_length=12,
+        unique=True,
+        blank=True,
+        null=True,
+    )
+    is_archived = models.BooleanField(default=False)
     characters = models.ManyToManyField(
         CharacterSheet,
         related_name="campaigns",
         blank=True,
     )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Кампания"
@@ -400,6 +552,58 @@ class Campaign(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.join_code:
+            alphabet = string.ascii_uppercase + string.digits
+            join_code = "".join(secrets.choice(alphabet) for _ in range(8))
+            while type(self).objects.filter(join_code=join_code).exists():
+                join_code = "".join(secrets.choice(alphabet) for _ in range(8))
+            self.join_code = join_code
+        super().save(*args, **kwargs)
+
+
+class CampaignJoinRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Ожидает"
+        ACCEPTED = "accepted", "Принят"
+        REJECTED = "rejected", "Отклонён"
+
+    campaign = models.ForeignKey(
+        Campaign,
+        on_delete=models.CASCADE,
+        related_name="join_requests",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="campaign_join_requests",
+    )
+    character = models.ForeignKey(
+        CharacterSheet,
+        on_delete=models.CASCADE,
+        related_name="campaign_join_requests",
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Заявка на вступление"
+        verbose_name_plural = "Заявки на вступление"
+        unique_together = ("campaign", "user")
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["campaign", "status"]),
+            models.Index(fields=["user", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user} -> {self.campaign} ({self.status})"
 
 
 class Session(models.Model):

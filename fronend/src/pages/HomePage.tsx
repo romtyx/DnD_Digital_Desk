@@ -1,11 +1,26 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { APITester } from "../APITester";
-import { apiService } from "@/services/api";
+import { apiService, type Campaign } from "@/services/api";
 
 export function HomePage() {
   const isAuthenticated = apiService.isAuthenticated();
+  const [publicCampaigns, setPublicCampaigns] = useState<Campaign[]>([]);
+  const [publicError, setPublicError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const list = await apiService.listPublicCampaigns();
+        setPublicCampaigns(list);
+      } catch (err) {
+        setPublicError(err instanceof Error ? err.message : "Не удалось загрузить публичные кампании");
+      }
+    };
+    load();
+  }, []);
 
   return (
     <div className="page-shell min-h-screen">
@@ -156,6 +171,47 @@ export function HomePage() {
                 </span>
               </div>
             </div>
+
+            <Card className="rounded-3xl border-amber-700/40 bg-amber-950/70 shadow-xl shadow-amber-900/30 backdrop-blur">
+              <CardHeader>
+                <CardTitle className="font-display text-2xl text-amber-100">
+                  Публичные кампании
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-amber-100/70">
+                {publicError && (
+                  <p className="text-red-200/80">{publicError}</p>
+                )}
+                {publicCampaigns.slice(0, 5).map((campaign) => (
+                  <div
+                    key={campaign.id}
+                    className="rounded-2xl border border-amber-700/40 bg-amber-900/40 p-3"
+                  >
+                    <p className="text-amber-100 font-medium">{campaign.name}</p>
+                    <p className="text-xs text-amber-100/60">
+                      {campaign.description || "Без описания"}
+                    </p>
+                    <p className="text-xs text-amber-100/60 mt-1">
+                      Игроков {campaign.players_count ?? 0}/{campaign.max_players}
+                    </p>
+                  </div>
+                ))}
+                {publicCampaigns.length === 0 && !publicError && (
+                  <p className="text-amber-100/60">Публичных кампаний пока нет.</p>
+                )}
+                <div className="pt-2">
+                  {isAuthenticated ? (
+                    <Button asChild variant="outline">
+                      <Link to="/desk/campaigns">Присоединиться</Link>
+                    </Button>
+                  ) : (
+                    <Button asChild variant="outline">
+                      <Link to="/login">Войти для участия</Link>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
 
             <details className="rounded-2xl border border-amber-700/40 bg-amber-950/50 p-4 text-sm text-amber-100/70">
               <summary className="cursor-pointer font-medium text-amber-100">

@@ -13,6 +13,7 @@ from .models import (
     AreaOfEffect,
     CharacterSheet,
     Player,
+    CampaignJoinRequest,
     CampaignNote,
     Storyline,
     StoryOutcome,
@@ -32,6 +33,7 @@ admin.site.register(MagicSchool)
 admin.site.register(AreaOfEffect)
 admin.site.register(CharacterSheet)
 admin.site.register(Player)
+admin.site.register(CampaignJoinRequest)
 admin.site.register(CampaignNote)
 admin.site.register(Storyline)
 admin.site.register(StoryOutcome)

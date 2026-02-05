@@ -13,25 +13,33 @@ export function DeskLayout() {
     ? Number(searchParams.get("campaign"))
     : null;
 
+  const activeCampaigns = useMemo(
+    () => campaigns.filter((campaign) => !campaign.is_archived),
+    [campaigns],
+  );
+
   const selectedCampaign = useMemo(
     () => campaigns.find((item) => item.id === selectedCampaignId) || null,
     [campaigns, selectedCampaignId],
   );
 
   useEffect(() => {
-    if (campaigns.length === 0) {
+    if (activeCampaigns.length === 0) {
       return;
     }
-    if (!selectedCampaignId || !campaigns.some((item) => item.id === selectedCampaignId)) {
-      setSearchParams({ campaign: String(campaigns[0].id) });
+    if (!selectedCampaignId || !activeCampaigns.some((item) => item.id === selectedCampaignId)) {
+      setSearchParams({ campaign: String(activeCampaigns[0].id) });
     }
-  }, [campaigns, selectedCampaignId, setSearchParams]);
+  }, [activeCampaigns, selectedCampaignId, setSearchParams]);
 
   const refreshCampaigns = async () => {
     const list = await apiService.listCampaigns();
     setCampaigns(list);
-    if (!selectedCampaignId && list.length > 0) {
-      setSearchParams({ campaign: String(list[0].id) });
+    if (!selectedCampaignId) {
+      const next = list.find((item) => !item.is_archived);
+      if (next) {
+        setSearchParams({ campaign: String(next.id) });
+      }
     }
   };
 
@@ -92,11 +100,11 @@ export function DeskLayout() {
             </p>
             <div className="mt-3 space-y-2">
               {loading && <p className="text-sm text-amber-100/70">Загрузка...</p>}
-              {campaigns.map((campaign) => (
-                <button
-                  key={campaign.id}
-                  type="button"
-                  onClick={() => handleSelectCampaign(campaign.id)}
+            {activeCampaigns.map((campaign) => (
+              <button
+                key={campaign.id}
+                type="button"
+                onClick={() => handleSelectCampaign(campaign.id)}
                   className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
                     campaign.id === selectedCampaignId
                       ? "border-amber-400/70 bg-amber-800/40"
@@ -107,7 +115,7 @@ export function DeskLayout() {
                   <p className="text-amber-100/60 text-xs">{campaign.description || "Без описания"}</p>
                 </button>
               ))}
-              {campaigns.length === 0 && (
+              {activeCampaigns.length === 0 && (
                 <p className="text-sm text-amber-100/70">Создай первую кампанию.</p>
               )}
             </div>
@@ -148,7 +156,7 @@ export function DeskLayout() {
         </aside>
 
         <section>
-          <Outlet context={{ selectedCampaignId, refreshCampaigns }} />
+          <Outlet context={{ selectedCampaignId, selectedCampaign, refreshCampaigns }} />
         </section>
       </div>
     </div>

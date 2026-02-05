@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { apiService, type SessionItem } from "@/services/api";
+import { apiService, type Campaign, type SessionItem } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface DeskContext {
   selectedCampaignId: number | null;
+  selectedCampaign: Campaign | null;
 }
 
 const toLocalInputValue = (iso: string) => {
@@ -20,7 +21,8 @@ const toLocalInputValue = (iso: string) => {
 const toIsoValue = (localValue: string) => new Date(localValue).toISOString();
 
 export function SessionsPage() {
-  const { selectedCampaignId } = useOutletContext<DeskContext>();
+  const { selectedCampaignId, selectedCampaign } = useOutletContext<DeskContext>();
+  const isOwner = selectedCampaign?.is_owner ?? false;
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,14 +131,16 @@ export function SessionsPage() {
                       <p className="text-xs text-amber-100/70 mt-2">{session.description}</p>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(session)}>
-                      Править
-                    </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(session.id)}>
-                      Удалить
-                    </Button>
-                  </div>
+                  {isOwner && (
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleEdit(session)}>
+                        Править
+                      </Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDelete(session.id)}>
+                        Удалить
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -146,53 +150,66 @@ export function SessionsPage() {
           </CardContent>
         </Card>
 
-        <Card className="pixel-panel">
-          <CardHeader>
-            <CardTitle className="font-display text-xl text-amber-100">
-              {editingId ? "Редактировать сессию" : "Новая сессия"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <Label className="text-xs uppercase tracking-[0.3em] text-amber-100/60">Данные сессии</Label>
-              <Input
-                type="number"
-                min={1}
-                value={draft.number}
-                onChange={(event) => setDraft((prev) => ({ ...prev, number: Number(event.target.value) }))}
-              />
-              <Input
-                type="datetime-local"
-                value={draft.date}
-                onChange={(event) => setDraft((prev) => ({ ...prev, date: event.target.value }))}
-              />
-              <Textarea
-                value={draft.description}
-                onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
-                placeholder="Кратко о сессии"
-              />
-              <div className="flex gap-2">
-                <Button type="submit">{editingId ? "Сохранить" : "Создать"}</Button>
-                {editingId && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setEditingId(null);
-                      setDraft({
-                        number: sessions.length + 1,
-                        date: toLocalInputValue(new Date().toISOString()),
-                        description: "",
-                      });
-                    }}
-                  >
-                    Отмена
-                  </Button>
-                )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        {isOwner ? (
+          <Card className="pixel-panel">
+            <CardHeader>
+              <CardTitle className="font-display text-xl text-amber-100">
+                {editingId ? "Редактировать сессию" : "Новая сессия"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <Label className="text-xs uppercase tracking-[0.3em] text-amber-100/60">Данные сессии</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={draft.number}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, number: Number(event.target.value) }))}
+                />
+                <Input
+                  type="datetime-local"
+                  value={draft.date}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, date: event.target.value }))}
+                />
+                <Textarea
+                  value={draft.description}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
+                  placeholder="Кратко о сессии"
+                />
+                <div className="flex gap-2">
+                  <Button type="submit">{editingId ? "Сохранить" : "Создать"}</Button>
+                  {editingId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingId(null);
+                        setDraft({
+                          number: sessions.length + 1,
+                          date: toLocalInputValue(new Date().toISOString()),
+                          description: "",
+                        });
+                      }}
+                    >
+                      Отмена
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="pixel-panel">
+            <CardHeader>
+              <CardTitle className="font-display text-xl text-amber-100">Только мастер</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-amber-100/70">
+                Редактирование сессий доступно только владельцу кампании.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

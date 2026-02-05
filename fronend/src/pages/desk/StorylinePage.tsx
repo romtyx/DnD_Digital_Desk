@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { apiService, type Storyline, type StoryOutcome } from "@/services/api";
+import { apiService, type Campaign, type Storyline, type StoryOutcome } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,12 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface DeskContext {
   selectedCampaignId: number | null;
+  selectedCampaign: Campaign | null;
 }
 
 export function StorylinePage() {
-  const { selectedCampaignId } = useOutletContext<DeskContext>();
+  const { selectedCampaignId, selectedCampaign } = useOutletContext<DeskContext>();
+  const isOwner = selectedCampaign?.is_owner ?? false;
   const [storylines, setStorylines] = useState<Storyline[]>([]);
   const [outcomes, setOutcomes] = useState<Record<number, StoryOutcome[]>>({});
   const [error, setError] = useState<string | null>(null);
@@ -135,9 +137,11 @@ export function StorylinePage() {
                       <p className="text-xs text-amber-100/70 mt-1">{line.summary}</p>
                     )}
                   </div>
-                  <Button size="sm" variant="destructive" onClick={() => handleDeleteStoryline(line.id)}>
-                    Удалить
-                  </Button>
+                  {isOwner && (
+                    <Button size="sm" variant="destructive" onClick={() => handleDeleteStoryline(line.id)}>
+                      Удалить
+                    </Button>
+                  )}
                 </div>
 
                 <div className="mt-3 space-y-2">
@@ -154,60 +158,66 @@ export function StorylinePage() {
                             <p className="text-xs text-amber-100/70 mt-1">{outcome.description}</p>
                           )}
                         </div>
-                        <Button size="sm" variant="destructive" onClick={() => handleDeleteOutcome(outcome.id)}>
-                          Удалить
-                        </Button>
+                        {isOwner && (
+                          <Button size="sm" variant="destructive" onClick={() => handleDeleteOutcome(outcome.id)}>
+                            Удалить
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
 
-                  <div className="mt-2 space-y-2">
-                    <Input
-                      value={outcomeDrafts[line.id]?.title || ""}
-                      onChange={(event) =>
-                        setOutcomeDrafts((prev) => ({
-                          ...prev,
-                          [line.id]: {
-                            title: event.target.value,
-                            condition: prev[line.id]?.condition || "",
-                            description: prev[line.id]?.description || "",
-                          },
-                        }))
-                      }
-                      placeholder="Название исхода"
-                    />
-                    <Input
-                      value={outcomeDrafts[line.id]?.condition || ""}
-                      onChange={(event) =>
-                        setOutcomeDrafts((prev) => ({
-                          ...prev,
-                          [line.id]: {
-                            title: prev[line.id]?.title || "",
-                            condition: event.target.value,
-                            description: prev[line.id]?.description || "",
-                          },
-                        }))
-                      }
-                      placeholder="Условие (например: если игроки не договорились)"
-                    />
-                    <Textarea
-                      value={outcomeDrafts[line.id]?.description || ""}
-                      onChange={(event) =>
-                        setOutcomeDrafts((prev) => ({
-                          ...prev,
-                          [line.id]: {
-                            title: prev[line.id]?.title || "",
-                            condition: prev[line.id]?.condition || "",
-                            description: event.target.value,
-                          },
-                        }))
-                      }
-                      placeholder="Описание исхода"
-                    />
-                    <Button type="button" onClick={() => handleOutcomeSubmit(line.id)}>
-                      Добавить исход
-                    </Button>
-                  </div>
+                  {isOwner ? (
+                    <div className="mt-2 space-y-2">
+                      <Input
+                        value={outcomeDrafts[line.id]?.title || ""}
+                        onChange={(event) =>
+                          setOutcomeDrafts((prev) => ({
+                            ...prev,
+                            [line.id]: {
+                              title: event.target.value,
+                              condition: prev[line.id]?.condition || "",
+                              description: prev[line.id]?.description || "",
+                            },
+                          }))
+                        }
+                        placeholder="Название исхода"
+                      />
+                      <Input
+                        value={outcomeDrafts[line.id]?.condition || ""}
+                        onChange={(event) =>
+                          setOutcomeDrafts((prev) => ({
+                            ...prev,
+                            [line.id]: {
+                              title: prev[line.id]?.title || "",
+                              condition: event.target.value,
+                              description: prev[line.id]?.description || "",
+                            },
+                          }))
+                        }
+                        placeholder="Условие (например: если игроки не договорились)"
+                      />
+                      <Textarea
+                        value={outcomeDrafts[line.id]?.description || ""}
+                        onChange={(event) =>
+                          setOutcomeDrafts((prev) => ({
+                            ...prev,
+                            [line.id]: {
+                              title: prev[line.id]?.title || "",
+                              condition: prev[line.id]?.condition || "",
+                              description: event.target.value,
+                            },
+                          }))
+                        }
+                        placeholder="Описание исхода"
+                      />
+                      <Button type="button" onClick={() => handleOutcomeSubmit(line.id)}>
+                        Добавить исход
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-amber-100/60">Добавлять исходы может только мастер.</p>
+                  )}
                 </div>
               </div>
             ))}
@@ -217,35 +227,48 @@ export function StorylinePage() {
           </CardContent>
         </Card>
 
-        <Card className="pixel-panel">
-          <CardHeader>
-            <CardTitle className="font-display text-xl text-amber-100">Новая линия</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <Label className="text-xs uppercase tracking-[0.3em] text-amber-100/60">Событие</Label>
-              <Input
-                value={draft.title}
-                onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
-                placeholder="Название события"
-                required
-              />
-              <Textarea
-                value={draft.summary}
-                onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
-                placeholder="Описание / заготовка"
-              />
-              <Input
-                type="number"
-                min={1}
-                value={draft.order}
-                onChange={(event) => setDraft((prev) => ({ ...prev, order: Number(event.target.value) }))}
-                placeholder="Порядок"
-              />
-              <Button type="submit">Добавить</Button>
-            </form>
-          </CardContent>
-        </Card>
+        {isOwner ? (
+          <Card className="pixel-panel">
+            <CardHeader>
+              <CardTitle className="font-display text-xl text-amber-100">Новая линия</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-3">
+                <Label className="text-xs uppercase tracking-[0.3em] text-amber-100/60">Событие</Label>
+                <Input
+                  value={draft.title}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, title: event.target.value }))}
+                  placeholder="Название события"
+                  required
+                />
+                <Textarea
+                  value={draft.summary}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, summary: event.target.value }))}
+                  placeholder="Описание / заготовка"
+                />
+                <Input
+                  type="number"
+                  min={1}
+                  value={draft.order}
+                  onChange={(event) => setDraft((prev) => ({ ...prev, order: Number(event.target.value) }))}
+                  placeholder="Порядок"
+                />
+                <Button type="submit">Добавить</Button>
+              </form>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="pixel-panel">
+            <CardHeader>
+              <CardTitle className="font-display text-xl text-amber-100">Только мастер</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-amber-100/70">
+                Редактирование сюжета доступно только владельцу кампании.
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

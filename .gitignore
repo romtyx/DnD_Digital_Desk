@@ -1,0 +1,11 @@
+.env
+backend/.env
+fronend/.env
+backend/.venv/
+backend/__pycache__/
+backend/**/*.pyc
+fronend/node_modules/
+fronend/dist/
+.DS_Store
+*.log
+DND_ (1).pdf

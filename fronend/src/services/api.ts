@@ -84,13 +84,24 @@ export interface Campaign {
   name: string
   description: string
   world_story: string
-  characters?: number[]
-  characters_detail?: {
+  is_public: boolean
+  max_players: number
+  join_code?: string | null
+  is_archived: boolean
+  owner: number | null
+  owner_name?: string
+  is_owner?: boolean
+  players?: {
     id: number
-    name: string
+    username: string
+    character_id: number
+    character_name: string
     character_class_name: string
     level: number
   }[]
+  players_count?: number
+  pending_requests_count?: number
+  my_request_status?: string | null
 }
 
 export interface SessionItem {
@@ -115,26 +126,161 @@ export interface CharacterClass {
 
 export interface CharacterSheet {
   id: number
+  owner?: number | null
   name: string
+  player_name: string
   character_class: number
   character_class_name?: string
   level: number
   race: string
   background: string
+  alignment: string
+  experience_points: number
   strength: number
+  strength_mod: number
   dexterity: number
+  dexterity_mod: number
   constitution: number
+  constitution_mod: number
   intelligence: number
+  intelligence_mod: number
   wisdom: number
+  wisdom_mod: number
   charisma: number
+  charisma_mod: number
+  saving_throw_strength: number
+  saving_throw_strength_prof: boolean
+  saving_throw_dexterity: number
+  saving_throw_dexterity_prof: boolean
+  saving_throw_constitution: number
+  saving_throw_constitution_prof: boolean
+  saving_throw_intelligence: number
+  saving_throw_intelligence_prof: boolean
+  saving_throw_wisdom: number
+  saving_throw_wisdom_prof: boolean
+  saving_throw_charisma: number
+  saving_throw_charisma_prof: boolean
+  skill_acrobatics: number
+  skill_acrobatics_prof: boolean
+  skill_animal_handling: number
+  skill_animal_handling_prof: boolean
+  skill_arcana: number
+  skill_arcana_prof: boolean
+  skill_athletics: number
+  skill_athletics_prof: boolean
+  skill_deception: number
+  skill_deception_prof: boolean
+  skill_history: number
+  skill_history_prof: boolean
+  skill_insight: number
+  skill_insight_prof: boolean
+  skill_intimidation: number
+  skill_intimidation_prof: boolean
+  skill_investigation: number
+  skill_investigation_prof: boolean
+  skill_medicine: number
+  skill_medicine_prof: boolean
+  skill_nature: number
+  skill_nature_prof: boolean
+  skill_perception: number
+  skill_perception_prof: boolean
+  skill_performance: number
+  skill_performance_prof: boolean
+  skill_persuasion: number
+  skill_persuasion_prof: boolean
+  skill_religion: number
+  skill_religion_prof: boolean
+  skill_sleight_of_hand: number
+  skill_sleight_of_hand_prof: boolean
+  skill_stealth: number
+  skill_stealth_prof: boolean
+  skill_survival: number
+  skill_survival_prof: boolean
   max_hit_points: number
   current_hit_points: number
+  temporary_hit_points: number
   armor_class: number
+  initiative: number
   speed: number
   inspiration: boolean
-  skills: string
+  proficiency_bonus: number
+  passive_perception: number
+  hit_dice_total: number
+  hit_dice_used: number
+  hit_dice_type: string
+  death_save_successes: number
+  death_save_failures: number
+  skills?: string
   equipment: string
-  spells: string
+  spells?: string
+  treasure: string
+  attacks: string
+  attacks_and_spells: string
+  other_proficiencies: string
+  personality_traits: string
+  ideals: string
+  bonds: string
+  flaws: string
+  features_traits: string
+  age: string
+  height: string
+  weight: string
+  eyes: string
+  skin: string
+  hair: string
+  appearance: string
+  appearance_image?: string | null
+  symbol_image?: string | null
+  backstory: string
+  allies_organizations: string
+  additional_features: string
+  spellcasting_class: string
+  spellcasting_ability: string
+  spell_save_dc: number
+  spell_attack_bonus: number
+  spells_cantrips: string
+  spell_slots_1_total: number
+  spell_slots_1_used: number
+  spells_level_1: string
+  spell_slots_2_total: number
+  spell_slots_2_used: number
+  spells_level_2: string
+  spell_slots_3_total: number
+  spell_slots_3_used: number
+  spells_level_3: string
+  spell_slots_4_total: number
+  spell_slots_4_used: number
+  spells_level_4: string
+  spell_slots_5_total: number
+  spell_slots_5_used: number
+  spells_level_5: string
+  spell_slots_6_total: number
+  spell_slots_6_used: number
+  spells_level_6: string
+  spell_slots_7_total: number
+  spell_slots_7_used: number
+  spells_level_7: string
+  spell_slots_8_total: number
+  spell_slots_8_used: number
+  spells_level_8: string
+  spell_slots_9_total: number
+  spell_slots_9_used: number
+  spells_level_9: string
+}
+
+export interface CampaignJoinRequest {
+  id: number
+  campaign: number
+  campaign_name?: string
+  campaign_owner_name?: string
+  user: number
+  user_name?: string
+  character: number
+  character_name?: string
+  character_class_name?: string
+  status: string
+  created_at: string
+  decided_at?: string | null
 }
 
 export interface CampaignNote {
@@ -187,10 +333,13 @@ class ApiService {
     options: RequestInit = {},
   ): Promise<T> {
     const token = this.getAuthToken()
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData
 
     // Build headers object
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+    }
+    if (!isFormData) {
+      headers['Content-Type'] = 'application/json'
     }
 
     // Merge existing headers if they're a plain object
@@ -287,7 +436,13 @@ class ApiService {
     return response?.results ?? []
   }
 
-  async createCampaign(data: Omit<Campaign, 'id'>): Promise<Campaign> {
+  async listPublicCampaigns(query?: string): Promise<Campaign[]> {
+    const suffix = query ? `?q=${encodeURIComponent(query)}` : ''
+    const response = await this.request<Paginated<Campaign>>(`/accounts/campaigns/public/${suffix}`)
+    return response?.results ?? []
+  }
+
+  async createCampaign(data: Partial<Omit<Campaign, 'id'>>): Promise<Campaign> {
     return this.request<Campaign>('/accounts/campaigns/', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -373,17 +528,52 @@ class ApiService {
     return response?.results ?? []
   }
 
-  async createCharacter(data: Partial<CharacterSheet>): Promise<CharacterSheet> {
-    return this.request<CharacterSheet>('/accounts/characters/', {
+  async listCampaignRequests(options?: {
+    scope?: 'incoming' | 'outgoing'
+    campaignId?: number
+    status?: string
+  }): Promise<CampaignJoinRequest[]> {
+    const params = new URLSearchParams()
+    if (options?.scope) params.set('scope', options.scope)
+    if (options?.campaignId) params.set('campaign', String(options.campaignId))
+    if (options?.status) params.set('status', options.status)
+    const suffix = params.toString() ? `?${params.toString()}` : ''
+    const response = await this.request<Paginated<CampaignJoinRequest>>(
+      `/accounts/campaign-requests/${suffix}`,
+    )
+    return response?.results ?? []
+  }
+
+  async createCampaignRequest(data: { campaign?: number; code?: string; character: number }): Promise<CampaignJoinRequest> {
+    return this.request<CampaignJoinRequest>('/accounts/campaign-requests/', {
       method: 'POST',
       body: JSON.stringify(data),
     })
   }
 
-  async updateCharacter(id: number, data: Partial<CharacterSheet>): Promise<CharacterSheet> {
+  async approveCampaignRequest(id: number): Promise<CampaignJoinRequest> {
+    return this.request<CampaignJoinRequest>(`/accounts/campaign-requests/${id}/approve/`, {
+      method: 'POST',
+    })
+  }
+
+  async rejectCampaignRequest(id: number): Promise<CampaignJoinRequest> {
+    return this.request<CampaignJoinRequest>(`/accounts/campaign-requests/${id}/reject/`, {
+      method: 'POST',
+    })
+  }
+
+  async createCharacter(data: Partial<CharacterSheet> | FormData): Promise<CharacterSheet> {
+    return this.request<CharacterSheet>('/accounts/characters/', {
+      method: 'POST',
+      body: data instanceof FormData ? data : JSON.stringify(data),
+    })
+  }
+
+  async updateCharacter(id: number, data: Partial<CharacterSheet> | FormData): Promise<CharacterSheet> {
     return this.request<CharacterSheet>(`/accounts/characters/${id}/`, {
       method: 'PATCH',
-      body: JSON.stringify(data),
+      body: data instanceof FormData ? data : JSON.stringify(data),
     })
   }
 

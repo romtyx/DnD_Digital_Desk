@@ -8,6 +8,7 @@ from .views import (
     ChangePasswordView,
     UserListView,
     CampaignViewSet,
+    CampaignJoinRequestViewSet,
     SessionViewSet,
     DMNoteViewSet,
     ClassViewSet,
@@ -23,6 +24,7 @@ from rest_framework_simplejwt.views import (
 
 router = DefaultRouter()
 router.register(r'campaigns', CampaignViewSet, basename='campaign')
+router.register(r'campaign-requests', CampaignJoinRequestViewSet, basename='campaign-request')
 router.register(r'sessions', SessionViewSet, basename='session')
 router.register(r'dm-notes', DMNoteViewSet, basename='dmnote')
 router.register(r'classes', ClassViewSet, basename='class')
