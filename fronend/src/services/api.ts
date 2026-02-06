@@ -1,17 +1,17 @@
 // Get API URL from environment variables (supports both Vite and Bun)
 const getApiBaseUrl = (): string => {
-  if (typeof window !== 'undefined') {
-    return '/api'
-  }
-
   try {
-    // Try Vite's import.meta.env first
+    // Prefer Vite env in all environments (browser + build)
     const viteEnv = (import.meta as any)?.env
     if (viteEnv?.VITE_API_URL) {
       return viteEnv.VITE_API_URL
     }
   } catch {
     // Ignore if import.meta is not available
+  }
+
+  if (typeof window !== 'undefined') {
+    return '/api'
   }
 
   try {
@@ -131,6 +131,7 @@ export interface CharacterSheet {
   player_name: string
   character_class: number
   character_class_name?: string
+  character_class_text?: string
   level: number
   race: string
   background: string

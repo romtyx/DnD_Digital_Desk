@@ -192,7 +192,16 @@ class ClassSerializer(serializers.ModelSerializer):
 
 
 class CharacterSheetSerializer(serializers.ModelSerializer):
+    character_class = serializers.PrimaryKeyRelatedField(
+        queryset=Class.objects.all(),
+        required=False,
+    )
     character_class_name = serializers.CharField(source='character_class.name', read_only=True)
+    character_class_text = serializers.CharField(
+        write_only=True,
+        required=False,
+        allow_blank=True,
+    )
 
     class Meta:
         model = CharacterSheet
@@ -202,6 +211,7 @@ class CharacterSheetSerializer(serializers.ModelSerializer):
             'name',
             'player_name',
             'character_class',
+            'character_class_text',
             'character_class_name',
             'level',
             'race',
@@ -340,6 +350,34 @@ class CharacterSheetSerializer(serializers.ModelSerializer):
             'spells_level_9',
         )
         read_only_fields = ('owner',)
+
+    def _resolve_class(self, value: str | None) -> Class | None:
+        if not value:
+            return None
+        name = value.strip()
+        if not name:
+            return None
+        class_obj, _ = Class.objects.get_or_create(name=name)
+        return class_obj
+
+    def validate(self, attrs):
+        if not attrs.get("character_class") and not attrs.get("character_class_text") and self.instance is None:
+            raise serializers.ValidationError({"character_class_text": "Укажите класс персонажа"})
+        return attrs
+
+    def create(self, validated_data):
+        text = validated_data.pop("character_class_text", None)
+        if text:
+            validated_data["character_class"] = self._resolve_class(text)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        text = validated_data.pop("character_class_text", None)
+        if text is not None:
+            resolved = self._resolve_class(text)
+            if resolved:
+                validated_data["character_class"] = resolved
+        return super().update(instance, validated_data)
 
 
 class CampaignJoinRequestSerializer(serializers.ModelSerializer):

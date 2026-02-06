@@ -155,6 +155,17 @@ export function CampaignsPage() {
     }
   };
 
+  const handleArchive = async (campaignId: number, nextState: boolean) => {
+    setError(null);
+    try {
+      await apiService.updateCampaign(campaignId, { is_archived: nextState });
+      await refreshCampaigns();
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Не удалось обновить кампанию");
+    }
+  };
+
   const handleJoinByCode = async () => {
     setJoinError(null);
     if (!joinCharacterId) {
@@ -448,6 +459,15 @@ export function CampaignsPage() {
                       <Button size="sm" variant="outline" onClick={() => handleEdit(campaign)}>
                         Править
                       </Button>
+                      {!campaign.is_archived && (
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleArchive(campaign.id, true)}
+                        >
+                          Завершить
+                        </Button>
+                      )}
                       <Button size="sm" variant="destructive" onClick={() => handleDelete(campaign.id)}>
                         Удалить
                       </Button>
@@ -547,10 +567,23 @@ export function CampaignsPage() {
                 key={campaign.id}
                 className="rounded-xl border border-amber-700/30 bg-amber-950/40 px-3 py-2"
               >
-                <p className="font-medium text-amber-100">{campaign.name}</p>
-                <p className="text-xs text-amber-100/60">
-                  {campaign.is_owner ? "Ваша кампания" : "Вы игрок"} · Игроков {campaign.players_count ?? 0}/{campaign.max_players}
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-medium text-amber-100">{campaign.name}</p>
+                    <p className="text-xs text-amber-100/60">
+                      {campaign.is_owner ? "Ваша кампания" : "Вы игрок"} · Игроков {campaign.players_count ?? 0}/{campaign.max_players}
+                    </p>
+                  </div>
+                  {campaign.is_owner && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleArchive(campaign.id, false)}
+                    >
+                      Возобновить
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
             {archivedCampaigns.length === 0 && (

@@ -95,11 +95,10 @@ export function HomePage() {
               )}
             </div>
 
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid sm:grid-cols-2 gap-3">
               {[
                 { label: "Кампании", value: "1+ активных" },
                 { label: "Сессии", value: "2 готовых" },
-                { label: "Заметки", value: "структура" },
               ].map((item) => (
                 <div
                   key={item.label}

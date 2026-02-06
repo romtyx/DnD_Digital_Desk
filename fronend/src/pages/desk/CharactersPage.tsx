@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { apiService, type CharacterClass, type CharacterSheet } from "@/services/api";
+import { useEffect, useState } from "react";
+import { apiService, type CharacterSheet } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 const defaultDraft = {
   name: "",
   player_name: "",
-  character_class: 0,
+  character_class_text: "",
   level: 1,
   race: "",
   background: "",
@@ -200,7 +200,6 @@ const spellSlots = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export function CharactersPage() {
   const [characters, setCharacters] = useState<CharacterSheet[]>([]);
-  const [classes, setClasses] = useState<CharacterClass[]>([]);
   const [draft, setDraft] = useState<CharacterDraft>(defaultDraft);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -209,16 +208,12 @@ export function CharactersPage() {
   const [appearancePreview, setAppearancePreview] = useState<string | null>(null);
   const [symbolPreview, setSymbolPreview] = useState<string | null>(null);
 
-  const classOptions = useMemo(() => classes, [classes]);
-
   const load = async () => {
     try {
-      const [chars, classList] = await Promise.all([
+      const [chars] = await Promise.all([
         apiService.listCharacters(),
-        apiService.listClasses(),
       ]);
       setCharacters(chars);
-      setClasses(classList);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Не удалось загрузить персонажей");
     }
@@ -227,12 +222,6 @@ export function CharactersPage() {
   useEffect(() => {
     load();
   }, []);
-
-  useEffect(() => {
-    if (!draft.character_class && classOptions.length > 0) {
-      setDraft((prev) => ({ ...prev, character_class: classOptions[0].id }));
-    }
-  }, [classOptions, draft.character_class]);
 
   const updateDraft = (key: keyof CharacterDraft, value: CharacterDraft[keyof CharacterDraft]) => {
     setDraft((prev) => ({ ...prev, [key]: value }));
@@ -267,7 +256,6 @@ export function CharactersPage() {
       setEditingId(null);
       setDraft({
         ...defaultDraft,
-        character_class: classOptions[0]?.id ?? 0,
       });
       setAppearanceFile(null);
       setSymbolFile(null);
@@ -281,10 +269,14 @@ export function CharactersPage() {
 
   const handleEdit = (character: CharacterSheet) => {
     setEditingId(character.id);
-    setDraft({
-      ...defaultDraft,
-      ...character,
+    const nextDraft: CharacterDraft = { ...defaultDraft };
+    (Object.keys(nextDraft) as Array<keyof CharacterDraft>).forEach((key) => {
+      if (key in character) {
+        nextDraft[key] = (character as any)[key] ?? nextDraft[key];
+      }
     });
+    nextDraft.character_class_text = character.character_class_name || "";
+    setDraft(nextDraft);
     setAppearanceFile(null);
     setSymbolFile(null);
     setAppearancePreview(character.appearance_image ?? null);
@@ -309,7 +301,7 @@ export function CharactersPage() {
         </div>
       )}
 
-      <div className="grid lg:grid-cols-[320px_1fr] gap-6">
+      <div className="space-y-6">
         <Card className="pixel-panel">
           <CardHeader>
             <CardTitle className="font-display text-xl text-amber-100">Персонажи</CardTitle>
@@ -349,49 +341,43 @@ export function CharactersPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-2">
-                <Input
-                  value={draft.name}
-                  onChange={(event) => updateDraft("name", event.target.value)}
-                  placeholder="Имя персонажа"
-                  required
-                />
-                <Input
-                  value={draft.player_name}
-                  onChange={(event) => updateDraft("player_name", event.target.value)}
-                  placeholder="Имя игрока"
-                />
-                <div className="space-y-2">
-                  <Label>Класс</Label>
-                  <select
-                    className="w-full rounded-md border border-amber-700/40 bg-amber-950/60 px-3 py-2 text-sm text-amber-100"
-                    value={draft.character_class}
-                    onChange={(event) => updateDraft("character_class", Number(event.target.value))}
-                    required
-                  >
-                    <option value={0} disabled>
-                      Выберите класс
-                    </option>
-                    {classOptions.map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <Input
-                  type="number"
-                  min={1}
-                  value={draft.level}
-                  onChange={(event) => updateDraft("level", Number(event.target.value))}
-                  placeholder="Уровень"
-                />
-                <Input
-                  value={draft.race}
-                  onChange={(event) => updateDraft("race", event.target.value)}
-                  placeholder="Раса"
-                  required
-                />
+      <div className="grid gap-3 md:grid-cols-2">
+        <Input
+          value={draft.name}
+          onChange={(event) => updateDraft("name", event.target.value)}
+          placeholder="Имя персонажа"
+          required
+        />
+        <Input
+          value={draft.player_name}
+          onChange={(event) => updateDraft("player_name", event.target.value)}
+          placeholder="Имя игрока"
+        />
+        <div className="space-y-2">
+          <Label>Класс персонажа</Label>
+          <Input
+            value={draft.character_class_text}
+            onChange={(event) => updateDraft("character_class_text", event.target.value)}
+            placeholder="Например: Воин"
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Уровень персонажа</Label>
+          <Input
+            type="number"
+            min={1}
+            value={draft.level}
+            onChange={(event) => updateDraft("level", Number(event.target.value))}
+            placeholder="Уровень"
+          />
+        </div>
+        <Input
+          value={draft.race}
+          onChange={(event) => updateDraft("race", event.target.value)}
+          placeholder="Раса"
+          required
+        />
                 <Input
                   value={draft.background}
                   onChange={(event) => updateDraft("background", event.target.value)}
@@ -873,7 +859,6 @@ export function CharactersPage() {
                   setEditingId(null);
                   setDraft({
                     ...defaultDraft,
-                    character_class: classOptions[0]?.id ?? 0,
                   });
                   setAppearanceFile(null);
                   setSymbolFile(null);
