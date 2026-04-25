@@ -60,11 +60,6 @@ export function LoginPage() {
                 Управляй кампаниями, добавляй заметки и держи темп сессий.
               </p>
             </div>
-            <div className="rounded-2xl border border-amber-700/40 bg-amber-950/60 p-4 text-sm text-amber-100/70">
-              <p className="font-medium text-amber-100">Демо-доступ</p>
-              <p>Логин: admin</p>
-              <p>Пароль: admin12345</p>
-            </div>
           </div>
 
           <Card className="w-full rounded-3xl border-amber-700/40 bg-amber-950/70 shadow-xl shadow-amber-900/30 backdrop-blur">

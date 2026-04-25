@@ -31,27 +31,27 @@ export function RegisterPage() {
     const newErrors: Record<string, string> = {};
 
     if (!formData.username.trim()) {
-      newErrors.username = "Username is required";
+      newErrors.username = "требуется имя пользователя";
     } else if (formData.username.length < 3) {
-      newErrors.username = "Username must be at least 3 characters";
+      newErrors.username = "Имя пользователя должно состоять как минимум из 3 символов.";
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = "Требуется электронная почта";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = "введите действительный адрес электронной почты";
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = "Требуется пароль";
     } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
+      newErrors.password = "Пароль должен состоять как минимум из 8 символов.";
     }
 
     if (!formData.password2) {
-      newErrors.password2 = "Please confirm your password";
+      newErrors.password2 = "Подтвердите свой пароль";
     } else if (formData.password !== formData.password2) {
-      newErrors.password2 = "Passwords do not match";
+      newErrors.password2 = "Пароли не совпадают";
     }
 
     setErrors(newErrors);
@@ -71,14 +71,14 @@ export function RegisterPage() {
 
     try {
       const response = await apiService.register(formData);
-      setSuccessMessage(response.message || "Registration successful!");
+      setSuccessMessage(response.message || "Успешная регистрация!");
       
       // Redirect to desk after a short delay
       setTimeout(() => {
         navigate("/desk/campaigns");
       }, 1500);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Registration failed. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "Проблемы с регистрацией, попробуйте ещё раз";
       setErrors({ submit: errorMessage });
     } finally {
       setIsLoading(false);
@@ -158,7 +158,7 @@ export function RegisterPage() {
                     required
                     aria-invalid={!!errors.username}
                     aria-describedby={errors.username ? "username-error" : undefined}
-                  />
+                  />  
                   {errors.username && (
                     <p id="username-error" className="text-sm text-red-600">
                       {errors.username}

@@ -475,12 +475,12 @@ export function DashboardPage() {
                 <Textarea
                   value={campaignDraft.description}
                   onChange={(event) => setCampaignDraft((prev) => ({ ...prev, description: event.target.value }))}
-                  placeholder="Короткое описание"
+                  placeholder="Краткое описание"
                 />
                 <Textarea
                   value={campaignDraft.world_story}
                   onChange={(event) => setCampaignDraft((prev) => ({ ...prev, world_story: event.target.value }))}
-                  placeholder="Сюжетный фон"
+                  placeholder="Сеттинг"
                 />
                 <div className="flex gap-2">
                   <Button type="submit">
